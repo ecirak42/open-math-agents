@@ -51,8 +51,8 @@ private theorem geometric (S B : PowerSeries (ZMod 2))
     rw [map_sub, sub_eq_zero, map_sum, hs]
     refine (sum_congr rfl (fun j hj => ?_)).trans
       (sum_subset (range_mono (show n + 1 ≤ N by omega)) (fun j _ hj => ?_))
-    · exact (by rw [hc, if_pos (show j ≤ n from Nat.le_of_lt_succ (mem_range.mp hj))])
-    · rw [hc, if_neg (by simpa using hj : ¬ j ≤ n)]
+    · simp only [hc, Nat.le_of_lt_succ (mem_range.mp hj), ↓reduceIte]
+    · simp only [hc, (by simpa using hj : ¬ j ≤ n), ↓reduceIte]
   suffices hz : S * (1 - q) - 1 = 0 from sub_eq_zero.mp hz
   ext n
   have hdiv : X ^ (n + 1) ∣ S * (1 - q) - 1 := by
@@ -61,7 +61,8 @@ private theorem geometric (S B : PowerSeries (ZMod 2))
     have hpow : X ^ (n + 1) ∣ q ^ (n + 1) := ⟨B ^ (n + 1), mul_pow _ _ _⟩
     have hD : X ^ (n + 1) ∣ (S - G) * (1 - q) - q ^ (n + 1) :=
       dvd_sub (dvd_mul_of_dvd_left (htrunc _) _) hpow
-    convert hD using 1 <;> linear_combination hG
+    convert hD using 1
+    linear_combination hG
   simpa only [map_zero] using X_pow_dvd_iff.mp hdiv n (Nat.lt_succ_self n)
 
 end A383377Proof
