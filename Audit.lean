@@ -186,11 +186,12 @@ private theorem recurrence (n : ℕ) : a (n+5) + (n+1) = a (n+4) + a (n+3) := by
     intro x hx hy
     obtain ⟨u, _, hu⟩ := mem_image.mp hx
     obtain ⟨v, _, hv⟩ := mem_image.mp hy
-    dsimp at hu hv
+    change 2*u+1 = x at hu
+    change 2*v = x at hv
     omega
-  have ia : Function.Injective (fun x : ℕ => x+1) := by intro x y h; omega
-  have io : Function.Injective (fun x : ℕ => 2*x+1) := by intro x y h; omega
-  have ie : Function.Injective (fun x : ℕ => 2*x) := by intro x y h; omega
+  have ia : Function.Injective (fun x : ℕ => x+1) := by intro x y h; dsimp at h; omega
+  have io : Function.Injective (fun x : ℕ => 2*x+1) := by intro x y h; dsimp at h; omega
+  have ie : Function.Injective (fun x : ℕ => 2*x) := by intro x y h; dsimp at h; omega
   have hsum := Finset.card_union_add_card_inter (S (n+4)) ((S (n+3)).image (fun x => x+1))
   rw [overlap, Nat.card_Icc, card_image_of_injective _ ia] at hsum
   change H.card + _ = _ at hsum
@@ -208,6 +209,7 @@ private theorem closedForm (k : ℕ) : a (k+3)+1 = LucasNat (k+3)+(k+3) := by
     · decide
     have h0 := ih k (by omega)
     have h1 := ih (k+1) (by omega)
+    change a (k+4)+1 = LucasNat (k+4)+(k+4) at h1
     have hl : LucasNat (k+5) = LucasNat (k+3) + LucasNat (k+4) := rfl
     have hr := recurrence k
     change a (k+5)+1 = LucasNat (k+5)+(k+5)
@@ -224,6 +226,8 @@ theorem OMA.solution : type_of% @OMA.S_oeis_a122554.main := by
     have h := Layman122554.recurrence k
     have h1 := Layman122554.recurrence (k+1)
     have h2 := Layman122554.recurrence (k+2)
+    change a (k+6)+(k+2) = a (k+5)+a (k+4) at h1
+    change a (k+7)+(k+3) = a (k+6)+a (k+5) at h2
     simp only [show ∀ i : ℕ, i+7-2=i+5 by omega,
       show ∀ i : ℕ, i+7-3=i+4 by omega, show ∀ i : ℕ, i+7-4=i+3 by omega,
       show ∀ i : ℕ, i+7-1=i+6 by omega]
