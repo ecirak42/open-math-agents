@@ -120,6 +120,51 @@ theorem cdfLogConcave (f F : ℝ → ℝ) (l u : ℝ)
     exact div_nonpos_of_nonpos_of_nonneg (sub_nonpos.mpr (key x (interior_subset hx)))
       (sq_nonneg _)
 
+/-- The mass below the mean is at least 1/e. A tangent to log F and the
+primitive of f log F avoid an improper integral at the lower endpoint. -/
+theorem massAtMean (F M f : ℝ → ℝ) (l u μ : ℝ) (hμ : μ ∈ Ioo l u)
+    (hF : Continuous F) (hM : Continuous M)
+    (hFpos : ∀ x ∈ Ioo l u, 0 < F x) (hf : ∀ x ∈ Ioo l u, 0 ≤ f x)
+    (hFder : ∀ x ∈ Ioo l u, HasDerivAt F (f x) x)
+    (hMder : ∀ x ∈ Ioo l u, HasDerivAt M (x*f x) x)
+    (hlog : ConcaveOn ℝ (Ioo l u) (fun x => Real.log (F x)))
+    (hFl : F l = 0) (hFu : F u = 1) (hMl : M l = 0) (hMu : M u = μ) :
+    (1:ℝ)/3 ≤ F μ := by
+  let a := F μ
+  let c := f μ / a
+  let P := fun t : ℝ => (Real.log a-c*μ)*F t + c*M t + Real.negMulLog (F t) + F t
+  have hP : Continuous P := by dsimp [P]; fun_prop
+  have derivP (x : ℝ) (hx : x ∈ Ioo l u) :
+      HasDerivAt P (f x*(Real.log a+c*(x-μ)-Real.log (F x))) x := by
+    have d := hFder x hx
+    have dm := hMder x hx
+    have he := (Real.hasDerivAt_negMulLog (hFpos x hx).ne').comp x d
+    have h := ((((d.const_mul (Real.log a-c*μ)).add (dm.const_mul c)).add he).add d)
+    convert h using 1
+    · rfl
+    · ring
+  have hm : MonotoneOn P (Icc l u) := by
+    apply monotoneOn_of_deriv_nonneg (convex_Icc ..) hP.continuousOn
+    · intro x hx
+      rw [interior_Icc] at hx
+      exact (derivP x hx).differentiableAt.differentiableWithinAt
+    · intro x hx
+      rw [interior_Icc] at hx
+      rw [(derivP x hx).deriv]
+      have hd : HasDerivAt (fun t => Real.log (F t)) c μ :=
+        (hFder μ hμ).log (hFpos μ hμ).ne'
+      have h := belowTangent hlog hμ hx hd
+      exact mul_nonneg (hf x hx) (sub_nonneg.mpr h)
+  have hlu := hμ.1.le.trans hμ.2.le
+  have hend := hm (left_mem_Icc.mpr hlu) (right_mem_Icc.mpr hlu) hlu
+  simp [P, hFl, hFu, hMl, hMu] at hend
+  have hlo : -1 ≤ Real.log (F μ) := by dsimp [a] at hend; linarith
+  have h := Real.exp_le_exp.mpr hlo
+  rw [Real.exp_log (hFpos μ hμ), Real.exp_neg] at h
+  refine le_trans ?_ h
+  have he : Real.exp 1 ≤ 3 := by linarith [Real.exp_one_lt_d9]
+  simpa [one_div] using (inv_anti₀ (Real.exp_pos 1) he)
+
 /-- The two areas about the mean agree by integration by parts. -/
 theorem meanBalance (F f : ℝ → ℝ) (l μ u : ℝ) (hl : l ≤ μ) (hu : μ ≤ u)
     (hF : ContinuousOn F (Icc l u)) (hf : ContinuousOn f (Icc l u))
@@ -296,6 +341,7 @@ theorem conclusionOfShapes (F : ℝ → ℝ) (μ u : ℝ) (hc : Continuous F)
 
 end LogConcaveTail
 
+#print axioms LogConcaveTail.massAtMean
 #print axioms LogConcaveTail.cdfLogConcave
 #print axioms LogConcaveTail.meanBalance
 #print axioms LogConcaveTail.tailBound
