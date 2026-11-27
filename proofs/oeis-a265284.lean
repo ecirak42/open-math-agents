@@ -122,7 +122,8 @@ private theorem recurrence (n : Nat) (hn : 0 < n) :
   have h3 := closed (n+3) (by omega)
   have h4 := closed (n+4) (by omega)
   simp only [pow_add,pow_one,Nat.cast_add,Nat.cast_ofNat] at h1 h3 h4
-  ring_nf at h0 h1 h3 h4
+  have h : 4*(a (n+4) - 2*a (n+3) + 2*a (n+1) - a n) = 0 := by
+    linear_combination h4 - 2*h3 + 2*h1 - h0
   omega
 
 private theorem series (n : Nat) : productCoeff n = numeratorCoeff n := by
@@ -130,6 +131,7 @@ private theorem series (n : Nat) : productCoeff n = numeratorCoeff n := by
   | 0 | 1 | 2 | 3 | 4 => decide
   | k+5 =>
     have h := recurrence (k+1) (by omega)
+    change a (k+5) = 2*a (k+4) - 2*a (k+2) + a (k+1) at h
     change a (k+5) - 2*a (k+4) + 2*a (k+2) - a (k+1) = 0
     omega
 
