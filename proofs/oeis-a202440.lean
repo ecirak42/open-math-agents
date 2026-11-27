@@ -94,7 +94,7 @@ private theorem recurrence (n : Nat) : fourth (fun j => total (n+(j+2))) = 0 := 
     change total 6 - 4*total 5 + 6*total 4 - 4*total 3 + total 2 = 0
     rw [totalKnown 6 (by decide), totalKnown 5 (by decide), totalKnown 4 (by decide),
       totalKnown 3 (by decide), totalKnown 2 (by decide)]
-    all_goals decide
+    decide
   | succ n ih =>
     have h := totalPair n
     unfold paired at h
@@ -104,12 +104,11 @@ private theorem recurrence (n : Nat) : fourth (fun j => total (n+(j+2))) = 0 := 
 private theorem series (n : Nat) : productCoeff n = numerator n := by
   match n with
   | 0 | 1 | 2 | 3 | 4 | 5 =>
-    simp only [productCoeff, fourth, a, numerator, Nat.add_zero, Nat.zero_add]
+    simp only [productCoeff, fourth, a, numerator, Nat.zero_add]
     repeat first
       | rw [totalKnown 1 (by decide)] | rw [totalKnown 2 (by decide)]
       | rw [totalKnown 3 (by decide)] | rw [totalKnown 4 (by decide)]
       | rw [totalKnown 5 (by decide)]
-    all_goals decide
   | k+6 => exact recurrence k
 
 end OMA.S_oeis_a202440
