@@ -42,6 +42,30 @@ namespace LogConcaveTail
 
 open MeasureTheory Set
 
+/-- The two areas about the mean agree by integration by parts. -/
+theorem meanBalance (F f : ℝ → ℝ) (l μ u : ℝ) (hl : l ≤ μ) (hu : μ ≤ u)
+    (hF : ContinuousOn F (Icc l u)) (hf : ContinuousOn f (Icc l u))
+    (hder : ∀ x ∈ Ioo l u, HasDerivAt F (f x) x) (hleft : F l = 0)
+    (hright : F u = 1) (hmean : (∫ x in l..u, x*f x) = μ) :
+    (∫ x in l..μ, F x) = ∫ x in μ..u, 1-F x := by
+  have hlu := hl.trans hu
+  have hFu : ContinuousOn F (uIcc l u) := by simpa [uIcc_of_le hlu] using hF
+  have hfu : ContinuousOn f (uIcc l u) := by simpa [uIcc_of_le hlu] using hf
+  have h₁ := intervalIntegral.integral_mul_deriv_eq_deriv_mul_of_hasDerivAt
+    (a := l) (b := u) (u := fun x : ℝ => x) (u' := fun _ => (1:ℝ))
+    (v := F) (v' := f) continuous_id.continuousOn hFu
+    (fun x _ => hasDerivAt_id x) (by simpa [min_eq_left hlu, max_eq_right hlu] using hder)
+    intervalIntegrable_const hfu.intervalIntegrable
+  simp only [one_mul, hleft, mul_zero, sub_zero, hright, mul_one, hmean] at h₁
+  have h₂ : IntervalIntegrable F volume l μ :=
+    (hF.mono (Icc_subset_Icc le_rfl hu)).intervalIntegrable_of_Icc hl
+  have h₃ : IntervalIntegrable F volume μ u :=
+    (hF.mono (Icc_subset_Icc hl le_rfl)).intervalIntegrable_of_Icc hu
+  have h₄ := intervalIntegral.integral_add_adjacent_intervals h₂ h₃
+  rw [intervalIntegral.integral_sub intervalIntegrable_const h₃,
+    intervalIntegral.integral_const, smul_eq_mul]
+  linarith
+
 theorem tailBound (S : ℝ → ℝ) (μ u : ℝ) (hu : μ ≤ u) (hc : Continuous S)
     (hmid : ∀ x ∈ Icc μ ((μ+u)/2), S μ * S (2*x-μ) ≤ (S x)^2) :
     (∫ x in μ..u, (1-S x)*S x) ≤ (1-S μ/2) * ∫ x in μ..u, S x := by
@@ -93,7 +117,8 @@ theorem exponentialChord (F : ℝ → ℝ) (μ a H : ℝ) (hμ : 0 < μ) (hH : 0
     (hchord : ∀ x ∈ Icc 0 μ, F x ≤ 1-Real.exp ((-H/μ)*x)) :
     (∫ x in 0..μ, F x) ≤ μ*(1-a/H) := by
   have hc' : Continuous (fun x : ℝ => Real.exp ((-H/μ)*x)) := by fun_prop
-  have hb : -H/μ ≠ 0 := by positivity
+  have hb : -H/μ ≠ 0 := div_ne_zero (neg_ne_zero.mpr hH.ne') hμ.ne'
+  have hinv : (-H/μ)⁻¹ = -(μ/H) := by simp [inv_div]
   calc
     _ ≤ ∫ x in 0..μ, 1-Real.exp ((-H/μ)*x) :=
       intervalIntegral.integral_mono_on hμ.le (hc.intervalIntegrable ..)
@@ -102,8 +127,8 @@ theorem exponentialChord (F : ℝ → ℝ) (μ a H : ℝ) (hμ : 0 < μ) (hH : 0
       rw [intervalIntegral.integral_sub (intervalIntegrable_const) (hc'.intervalIntegrable ..),
         intervalIntegral.integral_comp_mul_left Real.exp hb, integral_exp,
         mul_zero, Real.exp_zero, div_mul_cancel₀ _ hμ.ne', hexp,
-        intervalIntegral.integral_const, smul_eq_mul]
-      field_simp
+        intervalIntegral.integral_const, smul_eq_mul, hinv]
+      field_simp [hH.ne']
       ring
 
 theorem lowerBranch (μ a A I : ℝ) (hμ : 0 ≤ μ) (ha : 1/3 ≤ a)
@@ -168,6 +193,7 @@ theorem upperBranch (μ a H A I : ℝ) (hμ : 0 ≤ μ) (ha : 2/5 ≤ a) (ha' : 
 
 end LogConcaveTail
 
+#print axioms LogConcaveTail.meanBalance
 #print axioms LogConcaveTail.tailBound
 #print axioms LogConcaveTail.leftChordBound
 #print axioms LogConcaveTail.exponentialChord
