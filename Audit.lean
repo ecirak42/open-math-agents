@@ -51,7 +51,7 @@ private theorem evenSide (a b c K R : ℕ) (hb : 0 < b) (hc : 0 < c)
   have hs : IsSquare (z : ℚ) := by
     have hHq : (4 * (K : ℚ)) ^ 2 =
         (a + b + (c : ℚ)) * (-a + b + (c : ℚ)) * (a - b + (c : ℚ)) * (a + b - (c : ℚ)) := by
-      unfold hasArea at hH
+      dsimp [hasArea] at hH
       exact_mod_cast hH
     have hRq : 4 * (R : ℚ) * K = a * b * (c : ℚ) := by exact_mod_cast hR
     refine ⟨(R : ℚ) * (b ^ 2 + c ^ 2 - (a : ℚ) ^ 2) / (b * c), ?_⟩
@@ -64,7 +64,8 @@ private theorem evenSide (a b c K R : ℕ) (hb : 0 < b) (hc : 0 < c)
     dsimp [z] at ht
     linear_combination -ht
   have hm := congrArg (fun x : ℤ => x % 4) he
-  simp only [Int.add_emod, Int.mul_emod_right] at hm
+  change ((a : ℤ) ^ 2 + t ^ 2) % 4 = (4 * (R : ℤ)^2) % 4 at hm
+  rw [Int.add_emod, Int.mul_emod_right] at hm
   have ha := square_mod (a : ℤ)
   have ht' := square_mod t
   have h0 : (a : ℤ) ^ 2 % 4 = 0 := by omega
