@@ -120,6 +120,45 @@ theorem cdfLogConcave (f F : ℝ → ℝ) (l u : ℝ)
     exact div_nonpos_of_nonpos_of_nonneg (sub_nonpos.mpr (key x (interior_subset hx)))
       (sq_nonneg _)
 
+theorem concaveReflection (g : ℝ → ℝ) (l u : ℝ) (hc : ConcaveOn ℝ (Ioo l u) g) :
+    ConcaveOn ℝ (Ioo (-u) (-l)) (fun x => g (-x)) := by
+  refine ⟨convex_Ioo .., ?_⟩
+  intro x hx y hy a b ha hb hab
+  have hx' : -x ∈ Ioo l u := ⟨by linarith [hx.2], by linarith [hx.1]⟩
+  have hy' : -y ∈ Ioo l u := ⟨by linarith [hy.2], by linarith [hy.1]⟩
+  have h := hc.2 hx' hy' ha hb hab
+  simp only [smul_eq_mul] at *
+  convert h using 2 <;> ring
+
+/-- Reflecting the density proves the corresponding result for survival. -/
+theorem survivalLogConcave (f F : ℝ → ℝ) (l u : ℝ)
+    (hf : Continuous f) (hF : Continuous F)
+    (hder : ∀ x ∈ Ioo l u, DifferentiableAt ℝ f x)
+    (hfpos : ∀ x ∈ Ioo l u, 0 < f x)
+    (hlog : ConcaveOn ℝ (Ioo l u) (fun x => Real.log (f x)))
+    (hSpos : ∀ x ∈ Ioo l u, F x < 1)
+    (hFder : ∀ x ∈ Ioo l u, HasDerivAt F (f x) x) (hFu : F u = 1) :
+    ConcaveOn ℝ (Ioo l u) (fun x => Real.log (1-F x)) := by
+  let g := fun x : ℝ => f (-x)
+  let G := fun x : ℝ => 1-F (-x)
+  have hx' (x : ℝ) (hx : x ∈ Ioo (-u) (-l)) : -x ∈ Ioo l u :=
+    ⟨by linarith [hx.2], by linarith [hx.1]⟩
+  have cG : Continuous G := by dsimp [G]; fun_prop
+  have cg : Continuous g := by dsimp [g]; fun_prop
+  have hg (x : ℝ) (hx : x ∈ Ioo (-u) (-l)) : HasDerivAt G (g x) x := by
+    have h := (hasDerivAt_const x (1:ℝ)).sub
+      ((hFder (-x) (hx' x hx)).comp x (hasDerivAt_id x).neg)
+    simpa [G,g] using h
+  have prim (x : ℝ) (hx : x ∈ Ioo (-u) (-l)) : G x = ∫ t in -u..x, g t := by
+    rw [intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hx.1.le cG.continuousOn
+      (fun t ht => hg t ⟨ht.1, ht.2.trans hx.2⟩) (cg.intervalIntegrable ..)]
+    simp [G,hFu]
+  have h := cdfLogConcave g G (-u) (-l) cg.continuousOn
+    (fun x hx => (hder (-x) (hx' x hx)).comp x (differentiableAt_id.neg))
+    (fun x hx => hfpos _ (hx' x hx)) (concaveReflection _ _ _ hlog)
+    (fun x hx => sub_pos.mpr (hSpos _ (hx' x hx))) hg prim
+  simpa [G] using concaveReflection _ _ _ h
+
 /-- The mass below the mean is at least 1/e. A tangent to log F and the
 primitive of f log F avoid an improper integral at the lower endpoint. -/
 theorem massAtMean (F M f : ℝ → ℝ) (l u μ : ℝ) (hμ : μ ∈ Ioo l u)
@@ -341,6 +380,7 @@ theorem conclusionOfShapes (F : ℝ → ℝ) (μ u : ℝ) (hc : Continuous F)
 
 end LogConcaveTail
 
+#print axioms LogConcaveTail.survivalLogConcave
 #print axioms LogConcaveTail.massAtMean
 #print axioms LogConcaveTail.cdfLogConcave
 #print axioms LogConcaveTail.meanBalance
