@@ -16,7 +16,7 @@ private theorem parity_indices (g : PowerSeries (ZMod 2)) (hg : g = X + g ^ 2) :
     rw [map_add, coeff_X, coeff_expand]
   intro n
   induction n using Nat.strong_induction_on with
-  | h n ih =>
+  | ind n ih =>
     intro hn
     by_cases hone : n = 1
     · subst n
@@ -33,7 +33,7 @@ private theorem parity_indices (g : PowerSeries (ZMod 2)) (hg : g = X + g ^ 2) :
         exact ⟨k + 1, by rw [pow_succ']⟩
       · rintro ⟨k, hk⟩
         cases k with
-        | zero => simp at hk; omega
+        | zero => simp at hk
         | succ k => exact ⟨k, by rw [pow_succ'] at hk; omega⟩
     · have hz : g.coeff n = 0 := by simpa [hone, hd] using hc n
       rw [hz]
@@ -51,7 +51,11 @@ theorem OMA.solution : type_of% @OMA.S_oeis_a397588.main := by
   intro A _hzero hA
   let red := Int.castRingHom (ZMod 2)
   let g := PowerSeries.map red A
-  have h2 : (2 : PowerSeries (ZMod 2)) = 0 := by exact CharP.cast_eq_zero _ 2
+  have h2 : PowerSeries.map red (2 : PowerSeries ℤ) = 0 := by
+    calc
+      _ = (2 : PowerSeries (ZMod 2)) := map_ofNat _ _
+      _ = PowerSeries.C (2 : ZMod 2) := (map_ofNat _ _).symm
+      _ = 0 := by rw [show (2 : ZMod 2) = 0 by decide, map_zero]
   rw [Derivation.leibniz, PowerSeries.derivative_pow, PowerSeries.derivative_X] at hA
   have hg : g = PowerSeries.X + g ^ 2 := by
     simpa [g, smul_eq_mul, map_add, map_mul, map_pow, h2] using congrArg (PowerSeries.map red) hA
