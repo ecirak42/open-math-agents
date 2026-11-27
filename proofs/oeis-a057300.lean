@@ -46,7 +46,7 @@ private theorem appendDigit (q r : ℕ) (hr : r < 4) :
     simp [a, swapDigit]
   · rw [show (4*q+r)/4 = q by omega, show (4*q+r)%4 = r by omega]
 
-private theorem appendBit (q r b : ℕ) (hr : r < 4) (hb : b < 2) :
+private theorem appendBit (q r b : ℕ) (hb : b < 2) :
     a (2*(4*q+r)+b) = 4*a (2*q+r/2) + swapDigit (2*(r%2)+b) := by
   rw [show 2*(4*q+r)+b = 4*(2*q+r/2)+(2*(r%2)+b) by omega]
   exact appendDigit _ _ (by omega)
@@ -58,14 +58,14 @@ private theorem nextDigit (q r : ℕ) (hr : r < 4) (hq : Recurrences q) :
     Recurrences (4*q+r) := by
   obtain ⟨heven, hodd⟩ := hq
   have ha := appendDigit q r hr
-  have h0 := appendBit q r 0 hr (by decide)
-  have h1 := appendBit q r 1 hr (by decide)
+  have h0 := appendBit q r 0 (by decide)
+  have h1 := appendBit q r 1 (by decide)
   unfold Recurrences
   interval_cases r <;> norm_num [swapDigit] at ha h0 h1 ⊢ <;> omega
 
 theorem allCases (n : ℕ) : Recurrences n := by
   induction n using Nat.strong_induction_on with
-  | h n ih =>
+  | ind n ih =>
     by_cases hz : n = 0
     · subst n
       norm_num [Recurrences, a, swapDigit]
