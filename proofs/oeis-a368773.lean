@@ -30,30 +30,36 @@ private theorem quad : (1 - 3 * X) * B ^ 2 = (1 - X ^ 2) * (1 + 3 * X) := by
     _ = _ := by rw [hB, radical_sq]; dsimp [f]; ring
 
 private theorem ode :
-    derivative ℚ B - 10 • (X ^ 2 * derivative ℚ B) + 9 • (X ^ 4 * derivative ℚ B) =
+    (derivative (R := ℚ)) B - 10 • (X ^ 2 * (derivative (R := ℚ)) B) + 9 • (X ^ 4 * (derivative (R := ℚ)) B) =
       3 • B - X ^ 1 * B - 3 • (X ^ 2 * B) + 9 • (X ^ 3 * B) := by
-  let d := derivative ℚ
+  let d := (derivative (R := ℚ))
   have h3 : d 3 = 0 := by
-    change derivative ℚ (3 : PowerSeries ℚ) = 0
-    rw [show (3 : PowerSeries ℚ) = PowerSeries.C (3 : ℚ) by simp, derivative_C]
+    change (derivative (R := ℚ)) (3 : PowerSeries ℚ) = 0
+    rw [show (3 : PowerSeries ℚ) = PowerSeries.C (3 : ℚ) from (map_ofNat _ _).symm, derivative_C]
   have hd := congrArg d quad
   change d ((1 - 3 * X) * B^2) = d ((1 - X^2) * (1 + 3 * X)) at hd
   dsimp [d] at hd h3
   simp only [Derivation.leibniz, map_sub, map_add, derivative_one, derivative_X, h3,
-    derivative_pow, smul_eq_mul, Nat.cast_ofNat, Nat.reduceSub, pow_one, zero_mul,
-    mul_zero, mul_one, one_mul, add_zero, zero_add] at hd
+    derivative_pow, smul_eq_mul, Nat.cast_ofNat, Nat.reduceSub, pow_one,
+    mul_zero, mul_one, add_zero, zero_add] at hd
   simp only [nsmul_eq_mul, Nat.cast_ofNat, pow_one]
-  apply mul_left_cancel₀ (by norm_num : (2 : PowerSeries ℚ) ≠ 0)
+  have htwo : (2 : PowerSeries ℚ) ≠ 0 := by
+    intro h
+    have hc := congrArg (constantCoeff (R := ℚ)) h
+    rw [map_ofNat, map_zero] at hc
+    norm_num at hc
+  apply mul_left_cancel₀ htwo
   linear_combination ((1 - 3 * X) * B) * hd +
-    (-(2 : PowerSeries ℚ) * (1 - 3 * X) * derivative ℚ B + 3 * B) * quad
+    (-(2 : PowerSeries ℚ) * (1 - 3 * X) * (derivative (R := ℚ)) B + 3 * B) * quad
 
 private theorem coeff_ode (k : ℕ) :
     (((k : ℚ) + 4) + 1) * coeff (k + 5) B - 3 * coeff (k + 4) B
       + (-10 * ((k : ℚ) + 4) + 11) * coeff (k + 3) B + 3 * coeff (k + 2) B
       + 9 * (k : ℚ) * coeff (k + 1) B = 0 := by
   have h := congrArg (coeff (k + 4)) ode
-  simp only [map_sub, map_add, map_nsmul, coeff_X_pow_mul', coeff_derivative,
-    nsmul_eq_mul, Nat.cast_ofNat, Nat.cast_add, Nat.cast_one,
+  simp only [map_sub, map_add, map_nsmul] at h
+  simp only [coeff_X_pow_mul', coeff_derivative,
+    nsmul_eq_mul, Nat.cast_ofNat, Nat.cast_add,
     show 1 ≤ k + 4 by omega, show 2 ≤ k + 4 by omega,
     show 3 ≤ k + 4 by omega, show 4 ≤ k + 4 by omega, ↓reduceIte,
     show k + 4 - 1 = k + 3 by omega, show k + 4 - 2 = k + 2 by omega,
