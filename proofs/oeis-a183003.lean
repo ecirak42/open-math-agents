@@ -27,8 +27,7 @@ private theorem nontrivial (m : ℕ) :
       Prod.mk.injEq, Nat.add_one_ne_zero, ne_eq, not_false_eq_true, and_true]
     exact ⟨by omega, by nlinarith, by omega⟩
   · rintro ⟨i,j⟩ hp
-    simp only [mem_erase, upper, mem_filter, Nat.mem_divisorsAntidiagonal,
-      Prod.mk.injEq] at hp
+    simp only [mem_erase, upper, mem_filter, Nat.mem_divisorsAntidiagonal] at hp
     obtain ⟨hne, ⟨hprod, _⟩, hij⟩ := hp
     have hi : 2 ≤ i := by
       by_contra! h
@@ -59,7 +58,7 @@ private theorem pairs (m : ℕ) : A161840 (m+1) = 2 * A072670 m := by
     dsimp [D]
     rw [← Nat.map_div_right_divisors, Finset.card_map]
   have hswap : G.card = L.card := by
-    apply Finset.card_bij' (fun p _ => p.swap) (fun p _ => p.swap)
+    refine Finset.card_bij' (s := G) (t := L) (fun p _ => p.swap) (fun p _ => p.swap) ?_ ?_ ?_ ?_
     · intro p hp
       exact mem_filter.mpr ⟨Nat.swap_mem_divisorsAntidiagonal.mpr (mem_filter.mp hp).1,
         (mem_filter.mp hp).2⟩
@@ -71,8 +70,12 @@ private theorem pairs (m : ℕ) : A161840 (m+1) = 2 * A072670 m := by
   have he : E.card ≤ 1 := by
     apply Finset.card_le_one.mpr
     rintro ⟨a,b⟩ hp ⟨c,d⟩ hq
-    obtain ⟨h1, rfl⟩ := mem_filter.mp hp
-    obtain ⟨h2, rfl⟩ := mem_filter.mp hq
+    obtain ⟨h1, hab⟩ := mem_filter.mp hp
+    obtain ⟨h2, hcd⟩ := mem_filter.mp hq
+    change a = b at hab
+    change c = d at hcd
+    subst b
+    subst d
     have hh := (Nat.mem_divisorsAntidiagonal.mp h1).1
     have hk := (Nat.mem_divisorsAntidiagonal.mp h2).1
     have : a = c := by dsimp at hh hk; nlinarith
