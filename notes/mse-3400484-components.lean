@@ -51,11 +51,11 @@ theorem tailBound (S : ℝ → ℝ) (μ u : ℝ) (hu : μ ≤ u) (hc : Continuou
   have hsc : Continuous (fun x : ℝ => (S x)^2) := hc.pow 2
   have ha : Continuous (fun x : ℝ => S μ * S (2*x-μ)) :=
     continuous_const.mul (hc.comp (by fun_prop))
-  have h := intervalIntegral.integral_mono_on hm (ha.intervalIntegrable ..)
+  have h := intervalIntegral.integral_mono_on (μ := volume) hm (ha.intervalIntegrable ..)
     (hsc.intervalIntegrable ..) hmid
   have hnext : 0 ≤ ∫ x in m..u, (S x)^2 :=
     intervalIntegral.integral_nonneg hmu (fun x _ => sq_nonneg _)
-  have hadd := intervalIntegral.integral_add_adjacent_intervals
+  have hadd := intervalIntegral.integral_add_adjacent_intervals (μ := volume)
     (hsc.intervalIntegrable μ m) (hsc.intervalIntegrable m u)
   have hchange : (∫ x in μ..m, S (2*x-μ)) = (1/2) * ∫ x in μ..u, S x := by
     rw [intervalIntegral.integral_comp_mul_sub S (by norm_num : (2:ℝ) ≠ 0) μ]
@@ -85,7 +85,32 @@ theorem leftChordBound (F : ℝ → ℝ) (μ : ℝ) (hμ : 0 < μ) (hc : Continu
     _ = _ := by
       rw [intervalIntegral.integral_mul_const, integral_id]
       field_simp
-      <;> ring
+      ring
+
+/-- Integrate the exponential chord supplied by log-concavity of survival. -/
+theorem exponentialChord (F : ℝ → ℝ) (μ a H : ℝ) (hμ : 0 < μ) (hH : 0 < H)
+    (hc : Continuous F) (hexp : Real.exp (-H) = 1-a)
+    (hchord : ∀ x ∈ Icc 0 μ, F x ≤ 1-Real.exp ((-H/μ)*x)) :
+    (∫ x in 0..μ, F x) ≤ μ*(1-a/H) := by
+  have hc' : Continuous (fun x : ℝ => Real.exp ((-H/μ)*x)) := by fun_prop
+  have hb : -H/μ ≠ 0 := by positivity
+  calc
+    _ ≤ ∫ x in 0..μ, 1-Real.exp ((-H/μ)*x) :=
+      intervalIntegral.integral_mono_on hμ.le (hc.intervalIntegrable ..)
+        ((continuous_const.sub hc').intervalIntegrable ..) hchord
+    _ = _ := by
+      rw [intervalIntegral.integral_sub (intervalIntegrable_const) (hc'.intervalIntegrable ..),
+        intervalIntegral.integral_comp_mul_left Real.exp hb, integral_exp,
+        mul_zero, Real.exp_zero, div_mul_cancel₀ _ hμ.ne', hexp,
+        intervalIntegral.integral_const, smul_eq_mul]
+      field_simp
+      ring
+
+theorem lowerBranch (μ a A I : ℝ) (hμ : 0 ≤ μ) (ha : 1/3 ≤ a)
+    (hhead : A ≤ μ*a/2) (htail : I ≤ ((1+a)/2)*A) : I ≤ μ*a^2 := by
+  have ha₀ : 0 ≤ a := by linarith
+  have h₁ := mul_le_mul_of_nonneg_left hhead (show 0 ≤ (1+a)/2 by linarith)
+  nlinarith [mul_nonneg (mul_nonneg hμ ha₀) (show 0 ≤ 3*a-1 by linarith)]
 
 /-- The logarithm estimate follows by integrating an elementary rational majorant. -/
 theorem negLogBound (a : ℝ) (ha : 0 ≤ a) (ha' : a < 1) :
@@ -98,7 +123,12 @@ theorem negLogBound (a : ℝ) (ha : 0 ≤ a) (ha' : a < 1) :
       (hasDerivAt_const x (1:ℝ)).sub (hasDerivAt_id x)
     have h := (((hasDerivAt_id x).add (((hasDerivAt_pow 2 x).div_const 2))).add
       ((hasDerivAt_pow 3 x).div (hd₁.const_mul 3) h₁)).add (hd₁.log h₀)
-    convert h using 1 <;> dsimp [f] <;> field_simp <;> ring
+    convert h using 1
+    · funext t
+      rfl
+    · norm_num
+      field_simp
+      ring
   have hdiff : DifferentiableOn ℝ f (Icc 0 a) :=
     fun x hx => (hd x (lt_of_le_of_lt hx.2 ha')).differentiableAt.differentiableWithinAt
   have hm : MonotoneOn f (Icc 0 a) := by
@@ -110,11 +140,8 @@ theorem negLogBound (a : ℝ) (ha : 0 ≤ a) (ha' : a < 1) :
     have hx₀ := hmem.1
     positivity
   have h := hm (left_mem_Icc.mpr ha) (right_mem_Icc.mpr ha) ha
-  simpa [f] using (show -Real.log (1-a) ≤ a+a^2/2+a^3/(3*(1-a)) by
-    dsimp [f] at h
-    simp only [zero_pow (by decide : 2 ≠ 0), zero_pow (by decide : 3 ≠ 0),
-      zero_div, zero_add, sub_zero, Real.log_one, add_zero] at h
-    linarith)
+  simp [f] at h
+  linarith
 
 theorem upperBranch (μ a H A I : ℝ) (hμ : 0 ≤ μ) (ha : 2/5 ≤ a) (ha' : a < 1)
     (hH : H = -Real.log (1-a)) (hhead : A ≤ μ*(1-a/H))
@@ -143,5 +170,7 @@ end LogConcaveTail
 
 #print axioms LogConcaveTail.tailBound
 #print axioms LogConcaveTail.leftChordBound
+#print axioms LogConcaveTail.exponentialChord
+#print axioms LogConcaveTail.lowerBranch
 #print axioms LogConcaveTail.negLogBound
 #print axioms LogConcaveTail.upperBranch
