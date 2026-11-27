@@ -44,7 +44,7 @@ private theorem crossing (y : ℕ → ℝ) (L : ℕ) (d ε : ℝ)
     ∃ i ≤ L, ∃ z : ℤ, (z : ℝ) ≤ y i ∧ y i < (z : ℝ) + ε := by
   let z : ℤ := ⌊y 0⌋ + 1
   have hstart : y 0 < (z : ℝ) := by
-    simpa [z] using Int.lt_floor_add_one (y 0)
+    simp [z]
   have hz : (z : ℝ) ≤ y 0 + 1 := by
     simpa [z] using add_le_add_right (Int.floor_le (y 0)) 1
   have growth : ∀ i ≤ L, y 0 + (i : ℝ) * d ≤ y i := by
