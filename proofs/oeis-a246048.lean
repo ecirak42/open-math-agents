@@ -26,7 +26,8 @@ theorem exclusion {p : ℕ} (hp : p.Prime) (k : ℕ) :
     simpa only [pow_two] using scale hp (k + 1) n
   have htwo : (2 * n).factorial.factorization p =
       (2 : ℕ).factorial.factorization p + 2 * n.factorial.factorization p := by
-    simpa only [mul_comm n 2] using scale hp (k + 1) 2
+    rw [mul_comm 2 n]
+    exact scale hp (k + 1) 2
   intro hd
   change n.factorial ^ n * (2 * n).factorial ∣ (n ^ 2).factorial at hd
   have hv := (Nat.factorization_le_iff_dvd
