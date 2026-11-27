@@ -20,6 +20,12 @@ namespace OMA.S_oeis_a390007
 private def A (n : Int) := (n+1)/3
 private def B (n : Int) := (n-1)/2
 
+/-- The expression used for a T-shaped cut is its actual area spread. -/
+theorem spread_eq_range (x l h : Int) (hl : l ≤ h) :
+    spread x l h = max x (max l h) - min x (min l h) := by
+  simp only [spread, max_eq_right hl, min_eq_left hl, max_def, min_def]
+  split_ifs <;> omega
+
 private theorem dimensions (n : Int) (hn : 3 ≤ n) : valid n (.tee (A n) (B n)) := by
   simp only [valid, A, B]
   omega
@@ -136,8 +142,8 @@ private theorem four : ¬ ∃! s, optimal 4 s := by
       have : b = 1 := by omega
       subst b
       interval_cases a <;> decide
-  have first : optimal 4 (.tee 1 1) := ⟨by decide,bound⟩
-  have second : optimal 4 (.tee 2 1) := ⟨by decide,bound⟩
+  have first : optimal 4 (.tee 1 1) := ⟨by unfold valid; decide,bound⟩
+  have second : optimal 4 (.tee 2 1) := ⟨by unfold valid; decide,bound⟩
   rintro ⟨w,_,h⟩
   have e := (h _ first).trans (h _ second).symm
   cases e
