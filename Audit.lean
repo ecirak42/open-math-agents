@@ -58,7 +58,7 @@ private theorem residues (n : ℕ) (b c : ZMod 4)
   · left
     simpa using congrArg ZMod.val he
   · right
-    simpa using congrArg ZMod.val he
+    simpa [show (3 : ZMod 4).val = 3 by decide] using congrArg ZMod.val he
 
 private theorem witnesses (n : ℕ) (hn : 0 < n) (h : n % 4 = 0 ∨ n % 4 = 3) :
     folds n ∧ inA154708 n := by
