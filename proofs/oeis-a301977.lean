@@ -96,7 +96,11 @@ private theorem stirlingTotal (n : Nat) :
   let f := fun k => Nat.stirlingSecond (n+1) (k+1)%2
   have pad : (∑ k ∈ Finset.range (n+1), f k) =
       ∑ k ∈ Finset.range (2*(n+1)), f k := by
-    apply Finset.sum_subset (Finset.range_subset.mpr (by omega))
+    have incl : Finset.range (n+1) ⊆ Finset.range (2*(n+1)) := by
+      intro k hk
+      simp only [Finset.mem_range] at hk ⊢
+      omega
+    apply Finset.sum_subset incl
     intro k _ hk
     simp only [Finset.mem_range] at hk
     simp [f, Nat.stirlingSecond_eq_zero_of_lt (by omega : n+1 < k+1)]
@@ -123,13 +127,13 @@ private theorem boxTotal (S : Finset Nat) : (box S 0).card + (box S 1).card = S.
   have e : box S 1 = S.filter (fun x => ¬ x%2=0) := by
     ext x
     simp only [box, Finset.mem_filter]
-    omega
+    constructor <;> rintro ⟨hx, hr⟩ <;> exact ⟨hx, by omega⟩
   rw [e]
-  exact Finset.card_filter_add_card_filter_not _ _
+  exact Finset.card_filter_add_card_filter_not _
 
 private theorem halving (n : Nat) : ∀ x ∈ subseqs n, x/2 ∈ subseqs n := by
   induction n using Nat.strong_induction_on with
-  | h n ih =>
+  | ind n ih =>
     by_cases hn : n=0
     · subst n
       simp [subseqs]
@@ -175,7 +179,7 @@ private theorem matchBoxes (n : Nat) :
     (box (subseqs n) 0).card = oddCount (n+1) ∧
     (box (subseqs n) 1).card = oddCount n := by
   induction n using Nat.strong_induction_on with
-  | h n ih =>
+  | ind n ih =>
     by_cases hn : n=0
     · subst n
       simp [subseqs, box, oddCount, oddAt]
