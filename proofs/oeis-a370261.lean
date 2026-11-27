@@ -28,7 +28,11 @@ private theorem doubleAngle (k x : ℤ) :
   rw [lin] at dbl
   linear_combination 2 * norm - dbl
 
-theorem solution : ∀ n : ℕ, 1 ≤ n → ∃ k : ℕ, a n = k := by
+end OMA
+
+open Polynomial Polynomial.Chebyshev OMA.S_oeis_a370261
+
+theorem OMA.solution : type_of% @OMA.S_oeis_a370261.main := by
   intro n hn
   let P := U ℤ ((n : ℤ)-1)
   have h := Polynomial.sub_dvd_eval_sub (2*(n : ℤ)+1) 1 P
@@ -58,4 +62,3 @@ theorem solution : ∀ n : ℕ, 1 ≤ n → ∃ k : ℕ, a n = k := by
   rw [rad, Real.sqrt_sq_eq_abs]
   exact_mod_cast (Int.natCast_natAbs q).symm
 
-end OMA
