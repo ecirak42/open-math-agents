@@ -55,23 +55,23 @@ private theorem cat_eq (p : ℕ) : red p catalanZ = 1 + X * (red p catalanZ) ^ 2
     simpa [catalanZ, map_add, map_mul, map_pow, add_comm, mul_comm] using h.symm
   simpa [map_add, map_mul, map_pow, red] using congrArg (red p) hz
 
-private theorem red_nat (p m : ℕ) : red p (m : PowerSeries ℤ) = C (m : ZMod p) := by
-  rw [map_natCast, map_natCast]
+private theorem red_ten (p : ℕ) : red p (10 : PowerSeries ℤ) = C (10 : ZMod p) := calc
+  _ = (10 : PowerSeries (ZMod p)) := map_ofNat _ _
+  _ = C (10 : ZMod p) := (map_ofNat _ _).symm
 
 private theorem shift {R : Type*} [CommSemiring R] (f : PowerSeries R) (n : ℕ) :
     (f * X).coeff (n + 1) = f.coeff n := by
-  simpa using coeff_mul_X_pow f 1 n
+  simp
 
 theorem parity (n : ℕ) :
     ((series.coeff n : ℤ) : ZMod 2) = 1 ↔ ∃ k : ℕ, n + 1 = 2 ^ k := by
   let c := red 2 catalanZ
   have hten : red 2 (10 : PowerSeries ℤ) = 0 := by
-    rw [red_nat 2 10, show (10 : ZMod 2) = 0 by decide, map_zero]
+    rw [red_ten 2, show (10 : ZMod 2) = 0 by decide, map_zero]
   have ha : red 2 series = c := by
     rw [series, map_sub, map_mul, hten, zero_mul, zero_sub]
     ext i
-    have hn (t : ZMod 2) : -t = t := by fin_cases t <;> decide
-    simpa [c] using hn ((red 2 catalanZ).coeff i)
+    simp [c]
   have hy : c * X = X + (c * X) ^ 2 := calc
     c * X = (1 + X * c ^ 2) * X := congrArg (· * X) (cat_eq 2)
     _ = X + (c * X) ^ 2 := by ring
@@ -85,7 +85,7 @@ theorem modThree (n : ℕ) :
     ((series.coeff (3 * n + 2) : ℤ) : ZMod 3) = 0 := by
   let c := red 3 catalanZ
   have hten : red 3 (10 : PowerSeries ℤ) = 1 := by
-    rw [red_nat 3 10, show (10 : ZMod 3) = 1 by decide, map_one]
+    rw [red_ten 3, show (10 : ZMod 3) = 1 by decide, map_one]
   have hf : c ^ 3 = c.expand 3 (by decide) := by
     simpa only [PowerSeries.expand, ZMod.frobenius_zmod, MvPowerSeries.map_id, RingHom.id_apply] using
       (MvPowerSeries.map_frobenius_expand 3 (by decide) (f := c)).symm
@@ -106,8 +106,10 @@ theorem modThree (n : ℕ) :
       rw [ha]
       simp [coeff_zero_eq_constantCoeff_apply]
     | succ m =>
-      rw [show 3*(m+1) = (3*m+2)+1 by omega, hc, if_neg (by omega)]
-  · rw [show 3*n+2 = (3*n+1)+1 by omega, hc, if_neg (by omega)]
+      rw [show 3*(m+1) = (3*m+2)+1 by omega, hc]
+      simp [show ¬ 3 ∣ 3*m+2 by omega]
+  · rw [show 3*n+2 = (3*n+1)+1 by omega, hc]
+    simp [show ¬ 3 ∣ 3*n+1 by omega]
 
 end A395839Proof
 
