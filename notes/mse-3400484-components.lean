@@ -42,6 +42,84 @@ namespace LogConcaveTail
 
 open MeasureTheory Set
 
+/-- A tangent line to a differentiable concave function majorizes it. -/
+theorem belowTangent {g : ℝ → ℝ} {D : Set ℝ} {x y c : ℝ}
+    (hg : ConcaveOn ℝ D g) (hx : x ∈ D) (hy : y ∈ D) (hd : HasDerivAt g c x) :
+    g y ≤ g x + c*(y-x) := by
+  rcases lt_trichotomy x y with h | rfl | h
+  · have hs := hg.slope_le_of_hasDerivAt hx hy h hd
+    rw [slope_def_field] at hs
+    linarith [(div_le_iff₀ (sub_pos.mpr h)).mp hs]
+  · simp
+  · have hs := hg.le_slope_of_hasDerivAt hy hx h hd
+    rw [slope_def_field] at hs
+    linarith [(le_div_iff₀ (sub_pos.mpr h)).mp hs]
+
+/-- An exponential tangent with positive slope controls the area to its left. -/
+theorem leftExpArea (f : ℝ → ℝ) (l x b c : ℝ) (hx : l ≤ x) (hb : 0 ≤ b)
+    (hc : 0 < c) (hf : ContinuousOn f (Icc l x))
+    (hpoint : ∀ t ∈ Ioo l x, f t ≤ b * Real.exp (c*t-c*x)) :
+    (∫ t in l..x, f t) ≤ b/c := by
+  have hcont : Continuous (fun t : ℝ => b * Real.exp (c*t-c*x)) := by fun_prop
+  calc
+    _ ≤ ∫ t in l..x, b * Real.exp (c*t-c*x) :=
+      intervalIntegral.integral_mono_on_of_le_Ioo hx (hf.intervalIntegrable_of_Icc hx)
+        (hcont.intervalIntegrable ..) hpoint
+    _ = b * (c⁻¹ * (1-Real.exp (c*l-c*x))) := by
+      rw [intervalIntegral.integral_const_mul,
+        intervalIntegral.integral_comp_mul_sub Real.exp hc.ne', integral_exp]
+      simp [smul_eq_mul]
+    _ ≤ _ := by
+      rw [div_eq_mul_inv]
+      have h := mul_nonneg (mul_nonneg hb (inv_nonneg.mpr hc.le))
+        (Real.exp_pos (c*l-c*x)).le
+      linarith
+
+/-- One-dimensional preservation of log-concavity under cumulative integration. -/
+theorem cdfLogConcave (f F : ℝ → ℝ) (l u : ℝ)
+    (hf : ContinuousOn f (Icc l u))
+    (hder : ∀ x ∈ Ioo l u, DifferentiableAt ℝ f x)
+    (hfpos : ∀ x ∈ Ioo l u, 0 < f x)
+    (hlog : ConcaveOn ℝ (Ioo l u) (fun x => Real.log (f x)))
+    (hFpos : ∀ x ∈ Ioo l u, 0 < F x)
+    (hFder : ∀ x ∈ Ioo l u, HasDerivAt F (f x) x)
+    (hprim : ∀ x ∈ Ioo l u, F x = ∫ t in l..x, f t) :
+    ConcaveOn ℝ (Ioo l u) (fun x => Real.log (F x)) := by
+  have key (x : ℝ) (hx : x ∈ Ioo l u) : deriv f x * F x ≤ f x * f x := by
+    by_cases hd : 0 < deriv f x
+    · let c := deriv f x / f x
+      have hc : 0 < c := div_pos hd (hfpos x hx)
+      have hdlog : HasDerivAt (fun y => Real.log (f y)) c x :=
+        (hder x hx).hasDerivAt.log (hfpos x hx).ne'
+      have area := leftExpArea f l x (f x) c hx.1.le (hfpos x hx).le hc
+        (hf.mono (Icc_subset_Icc le_rfl hx.2.le)) (by
+          intro t ht
+          have ht' : t ∈ Ioo l u := ⟨ht.1, ht.2.trans hx.2⟩
+          have h := belowTangent hlog hx ht' hdlog
+          have h' : Real.log (f t) ≤ Real.log (f x) + (c*t-c*x) := by linarith
+          have := Real.exp_le_exp.mpr h'
+          rwa [Real.exp_log (hfpos t ht'), Real.exp_add, Real.exp_log (hfpos x hx)] at this)
+      rw [← hprim x hx] at area
+      have h := (le_div_iff₀ hc).mp area
+      change F x * (deriv f x / f x) ≤ f x at h
+      rw [← mul_div_assoc] at h
+      linarith [(div_le_iff₀ (hfpos x hx)).mp h]
+    · exact (mul_nonpos_of_nonpos_of_nonneg (le_of_not_gt hd) (hFpos x hx).le).trans
+        (mul_self_nonneg _)
+  apply concaveOn_of_hasDerivWithinAt2_nonpos (f' := fun x => f x/F x)
+    (f'' := fun x => (deriv f x*F x - f x*f x)/(F x)^2) (convex_Ioo ..)
+  · intro x hx
+    exact ((hFder x hx).log (hFpos x hx).ne').continuousAt.continuousWithinAt
+  · intro x hx
+    have hmem := interior_subset hx
+    exact ((hFder x hmem).log (hFpos x hmem).ne').hasDerivWithinAt
+  · intro x hx
+    have hmem := interior_subset hx
+    exact ((hder x hmem).hasDerivAt.div (hFder x hmem) (hFpos x hmem).ne').hasDerivWithinAt
+  · intro x hx
+    exact div_nonpos_of_nonpos_of_nonneg (sub_nonpos.mpr (key x (interior_subset hx)))
+      (sq_nonneg _)
+
 /-- The two areas about the mean agree by integration by parts. -/
 theorem meanBalance (F f : ℝ → ℝ) (l μ u : ℝ) (hl : l ≤ μ) (hu : μ ≤ u)
     (hF : ContinuousOn F (Icc l u)) (hf : ContinuousOn f (Icc l u))
@@ -218,6 +296,7 @@ theorem conclusionOfShapes (F : ℝ → ℝ) (μ u : ℝ) (hc : Continuous F)
 
 end LogConcaveTail
 
+#print axioms LogConcaveTail.cdfLogConcave
 #print axioms LogConcaveTail.meanBalance
 #print axioms LogConcaveTail.tailBound
 #print axioms LogConcaveTail.leftChordBound
