@@ -183,7 +183,8 @@ private theorem matchBoxes (n : Nat) :
   | ind n ih =>
     by_cases hn : n=0
     · subst n
-      simp [subseqs, box, oddCount, oddAt] <;> decide
+      simp [subseqs, box, oddCount, oddAt]
+      decide
     · let m := n/2
       have hlt : m<n := by dsimp [m]; omega
       obtain ⟨h0,h1⟩ := ih m hlt
