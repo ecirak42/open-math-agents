@@ -118,7 +118,7 @@ theorem exponentialChord (F : ℝ → ℝ) (μ a H : ℝ) (hμ : 0 < μ) (hH : 0
     (∫ x in 0..μ, F x) ≤ μ*(1-a/H) := by
   have hc' : Continuous (fun x : ℝ => Real.exp ((-H/μ)*x)) := by fun_prop
   have hb : -H/μ ≠ 0 := div_ne_zero (neg_ne_zero.mpr hH.ne') hμ.ne'
-  have hinv : (-H/μ)⁻¹ = -(μ/H) := by simp [inv_div]
+  have hinv : (-H/μ)⁻¹ = -(μ/H) := by rw [inv_div, div_neg]
   calc
     _ ≤ ∫ x in 0..μ, 1-Real.exp ((-H/μ)*x) :=
       intervalIntegral.integral_mono_on hμ.le (hc.intervalIntegrable ..)
@@ -128,7 +128,7 @@ theorem exponentialChord (F : ℝ → ℝ) (μ a H : ℝ) (hμ : 0 < μ) (hH : 0
         intervalIntegral.integral_comp_mul_left Real.exp hb, integral_exp,
         mul_zero, Real.exp_zero, div_mul_cancel₀ _ hμ.ne', hexp,
         intervalIntegral.integral_const, smul_eq_mul, hinv]
-      field_simp [hH.ne']
+      simp only [smul_eq_mul, div_eq_mul_inv]
       ring
 
 theorem lowerBranch (μ a A I : ℝ) (hμ : 0 ≤ μ) (ha : 1/3 ≤ a)
@@ -191,6 +191,31 @@ theorem upperBranch (μ a H A I : ℝ) (hμ : 0 ≤ μ) (ha : 2/5 ≤ a) (ha' : 
   have h₅ := mul_le_mul_of_nonneg_left h₃ hμ
   nlinarith
 
+/-- Combine the pointwise shape inequalities. In the lower case the CDF
+lies below its chord. In the upper case survival lies above its log chord. -/
+theorem conclusionOfShapes (F : ℝ → ℝ) (μ u : ℝ) (hc : Continuous F)
+    (hμ : 0 < μ) (hu : μ ≤ u) (ha : 0 < F μ) (ha' : F μ < 1)
+    (balance : (∫ x in 0..μ, F x) = ∫ x in μ..u, 1-F x)
+    (mid : ∀ x ∈ Icc μ ((μ+u)/2), (1-F μ)*(1-F (2*x-μ)) ≤ (1-F x)^2)
+    (mode : (1/3 ≤ F μ ∧ ∀ x ∈ Icc 0 μ, F x ≤ x*(F μ/μ)) ∨
+      (2/5 ≤ F μ ∧ ∀ x ∈ Icc 0 μ, F x ≤ 1-Real.exp ((Real.log (1-F μ)/μ)*x))) :
+    (∫ x in μ..u, F x*(1-F x)) ≤ μ*(F μ)^2 := by
+  let S := fun x : ℝ => 1-F x
+  have ht := tailBound S μ u hu (continuous_const.sub hc) mid
+  dsimp [S] at ht
+  have hs : 1-(1-F μ)/2 = (1+F μ)/2 := by ring
+  simp only [sub_sub_cancel, hs, ← balance] at ht
+  rcases mode with ⟨ha₁, h₁⟩ | ⟨ha₂, h₂⟩
+  · exact lowerBranch _ _ _ _ hμ.le ha₁ (leftChordBound _ _ hμ hc h₁) ht
+  · let H := -Real.log (1-F μ)
+    have hpos : 0 < H := neg_pos.mpr (Real.log_neg (by linarith) (by linarith))
+    have he : Real.exp (-H) = 1-F μ := by
+      dsimp [H]
+      rw [neg_neg, Real.exp_log (by linarith)]
+    have hhead := exponentialChord F μ (F μ) H hμ hpos hc he
+      (by simpa [H] using h₂)
+    exact upperBranch _ _ _ _ _ hμ.le ha₂ ha' rfl hhead ht
+
 end LogConcaveTail
 
 #print axioms LogConcaveTail.meanBalance
@@ -200,3 +225,4 @@ end LogConcaveTail
 #print axioms LogConcaveTail.lowerBranch
 #print axioms LogConcaveTail.negLogBound
 #print axioms LogConcaveTail.upperBranch
+#print axioms LogConcaveTail.conclusionOfShapes
