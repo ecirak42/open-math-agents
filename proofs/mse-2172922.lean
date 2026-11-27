@@ -33,8 +33,7 @@ cross an integer, with overshoot less than ε.
 Credit: @ecirak42
 -/
 
-namespace OMA
-open S_mse_2172922
+open OMA.S_mse_2172922
 
 /-- Positive increments accumulate to at least one. If each is smaller than ε,
 the first crossing of the next integer has overshoot less than ε. -/
@@ -111,7 +110,7 @@ private theorem logBlock (d : ℝ) (hd : 0 < d) (B L : ℕ) :
     dsimp [x] at hs'
     linarith
 
-theorem solution : type_of% OMA.S_mse_2172922.main := by
+theorem OMA.solution : type_of% @OMA.S_mse_2172922.main := by
   intro ε hε B
   let d := ε / 3
   have hd : 0 < d := by dsimp [d]; positivity
@@ -142,6 +141,5 @@ theorem solution : type_of% OMA.S_mse_2172922.main := by
   rw [hw] at hfloor'
   linarith
 
-end OMA
 
 #print axioms OMA.solution
