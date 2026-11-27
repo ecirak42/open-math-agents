@@ -68,15 +68,20 @@ private theorem follows (n : ℕ) : f (n+1) = nextValue f n := by
       rw [hf]
       unfold f
       split_ifs <;> omega
-    rw [nextValue, if_pos ⟨by omega, fresh⟩, hf, tail (n+1) (by omega)]
-    split_ifs <;> omega
+    have good : n+1 ≤ f n ∧ ∀ i : Fin (n+1), f i ≠ f n - (n+1) := ⟨by omega, fresh⟩
+    unfold nextValue
+    split
+    · rw [hf, tail (n+1) (by omega)]
+      split_ifs <;> omega
+    · contradiction
   · have hf : f n = n + 5 := by simp [tail n (by omega), he]
     have used : ¬ (n+1 ≤ f n ∧ ∀ i : Fin (n+1), f i ≠ f n - (n+1)) := by
       rintro ⟨_, h⟩
       have h1 := h ⟨1, by omega⟩
       change 4 ≠ f n - (n+1) at h1
       omega
-    rw [nextValue, if_neg used, hf, tail (n+1) (by omega)]
+    simp only [nextValue, used, ↓reduceIte]
+    rw [hf, tail (n+1) (by omega)]
     split_ifs <;> omega
 
 private theorem unique (a : ℕ → ℕ) (h0 : a 0 = 0)
@@ -94,7 +99,8 @@ private theorem unique (a : ℕ → ℕ) (h0 : a 0 = 0)
         intro i
         rw [hp, ih i i.isLt]
       rw [ha, follows]
-      simp only [nextValue, hmem, hp]
+      rw [hp] at hmem
+      simp only [nextValue, hp, hmem]
 
 private theorem generating (n : ℕ) :
     (f n : ℤ) - 2 * lag f n 2 + lag f n 4 = numerator n := by
@@ -104,7 +110,7 @@ private theorem generating (n : ℕ) :
     obtain ⟨m, rfl⟩ : ∃ m, n = m + 7 := ⟨n-7, by omega⟩
     rfl
   rw [hnum]
-  simp only [lag, if_pos (show 2 ≤ n by omega), if_pos (show 4 ≤ n by omega),
+  simp only [lag, show 2 ≤ n by omega, show 4 ≤ n by omega, ↓reduceIte,
     tail n (by omega), tail (n-2) (by omega), tail (n-4) (by omega)]
   split_ifs <;> omega
 
