@@ -90,6 +90,10 @@ set_option maxHeartbeats 2000000 in
 private theorem firstCoeffs : ∀ k : Fin 15,
     productCoeff (fun j => entry j 0) denominator k.val = numeratorCoeff k.val := by decide
 
+private theorem lastCoeff (f : Nat → Int) (c : Int) (n : Nat) :
+    productCoeff f [c] n = c * f n := by
+  cases n <;> simp [productCoeff]
+
 private theorem series (n : Nat) :
     productCoeff a denominator n = numeratorCoeff n := by
   by_cases hn : n < 15
@@ -100,7 +104,7 @@ private theorem series (n : Nat) :
     have e : n = k + 15 := by omega
     rw [e]
     have hr := recurrence k 0
-    simp [denominator, productCoeff, numeratorCoeff, deviation, a, Nat.add_assoc] at *
+    simp [denominator, productCoeff, lastCoeff, numeratorCoeff, deviation, a, Nat.add_assoc] at *
     omega
 
 end OMA.S_oeis_a133552
