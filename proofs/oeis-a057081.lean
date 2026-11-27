@@ -51,7 +51,7 @@ private theorem aval (n : ℕ) : a n = sinh ((2 * (n : ℝ) + 1) * t) / sinh t :
   apply (eq_div_iff shpos.ne').mpr
   unfold a
   rw [← show cosh t = sqrt 11 / 2 from Real.cosh_arcosh arg_gt.le]
-  simpa using Polynomial.Chebyshev.U_real_cosh t (2 * (n : ℤ))
+  simp
 
 private theorem product_sinh (x y : ℝ) :
     sinh (x + y) * sinh (x - y) = sinh x ^ 2 - sinh y ^ 2 := by
@@ -70,7 +70,7 @@ private theorem sval (n : ℕ) : s n = sinh ((n : ℝ) * t) ^ 2 / sinh t ^ 2 := 
     rw [show ((n : ℝ) + 1) * t + n * t = (2 * n + 1) * t by ring,
         show ((n : ℝ) + 1) * t - n * t = t by ring] at h
     field_simp [shpos.ne']
-    simp only [mul_comm, mul_left_comm, mul_assoc, add_comm, add_left_comm, add_assoc] at h ⊢
+    simp only [mul_comm, add_comm] at h ⊢
     linarith
 
 private theorem rational_identity (x y L R c d : ℝ) (hx : 0 < x) (hd : 0 < d)
@@ -106,7 +106,7 @@ private theorem bfirst (k : ℕ) : b k 0 = 1 / (1 + a k) := by
     ring
   have hv : 0 < sinh ((2 * (k : ℝ) + 1) * t) := Real.sinh_pos_iff.mpr (by positivity)
   field_simp [shpos.ne', hu.ne', (Real.cosh_pos _).ne', (add_pos shpos hv).ne']
-  simp only [mul_comm, mul_left_comm, mul_assoc, add_comm, add_left_comm, add_assoc] at h ⊢
+  simp only [mul_comm, mul_assoc, add_comm] at h ⊢
   linarith
 
 private theorem decompose (k n : ℕ) :
