@@ -11,11 +11,10 @@ private theorem interlaced_step (j : ℕ) :
     have hd : (j + 2) / 2 = j / 2 + 1 := by omega
     have hj : 2 * (j / 2) = j := by omega
     have hj' : 2 * ((j / 2 : ℕ) : ℤ) = (j : ℤ) := by exact_mod_cast hj
-    simp only [interlaced, if_pos h, if_pos h', hd, Nat.factorial_succ,
+    simp only [interlaced, h, h', ↓reduceIte, hd, Nat.factorial_succ,
       Nat.cast_mul, Nat.cast_add, Nat.cast_one]
     linear_combination ((j / 2).factorial : ℤ) * hj'
-  · have h' : (j + 2) % 2 ≠ 0 := by omega
-    simp [interlaced, h, h']
+  · simp [interlaced, h]
 
 private theorem pascal (n : ℕ) (f : ℕ → ℤ) :
     transform (n + 1) f = transform n f + transform n (fun j => f (j + 1)) := by
@@ -58,7 +57,6 @@ theorem recurrence (k : ℕ) :
       + ((k : ℤ) + 1) * a k = 0 := by
   unfold a
   have h := pascal (k + 1) (fun j => interlaced (j + 1))
-  dsimp only at h
   linear_combination 2 * pascal (k + 2) interlaced - 2 * pascal (k + 1) interlaced
     + 2 * h + lifted (k + 1) + moment k interlaced
     - ((k : ℤ) + 1) * pascal k interlaced
