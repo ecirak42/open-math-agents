@@ -70,6 +70,7 @@ private theorem sval (n : ℕ) : s n = sinh ((n : ℝ) * t) ^ 2 / sinh t ^ 2 := 
     rw [show ((n : ℝ) + 1) * t + n * t = (2 * n + 1) * t by ring,
         show ((n : ℝ) + 1) * t - n * t = t by ring] at h
     field_simp [shpos.ne']
+    simp only [mul_comm, mul_left_comm, mul_assoc, add_comm, add_left_comm, add_assoc] at h ⊢
     linarith
 
 private theorem rational_identity (x y L R c d : ℝ) (hx : 0 < x) (hd : 0 < d)
@@ -81,12 +82,12 @@ private theorem rational_identity (x y L R c d : ℝ) (hx : 0 < x) (hd : 0 < d)
   calc
     _ = d * x / (x ^ 2 - y ^ 2) := by
       have h : x / d - y ^ 2 / d ^ 2 / (x / d) = (x ^ 2 - y ^ 2) / (d*x) := by
-        field_simp [hx.ne', hd.ne']; ring
-      rw [h]; field_simp; ring
+        field_simp [hx.ne', hd.ne']
+      rw [h]; field_simp
     _ = _ := by
       rw [hprod]
       field_simp [hc.ne', hL.ne', hR.ne']
-      linear_combination -d * hsum
+      linear_combination -hsum
 
 noncomputable def b (k n : ℕ) : ℝ :=
   sinh t / (2 * cosh ((k : ℝ) * t)) /
@@ -105,7 +106,8 @@ private theorem bfirst (k : ℕ) : b k 0 = 1 / (1 + a k) := by
     ring
   have hv : 0 < sinh ((2 * (k : ℝ) + 1) * t) := Real.sinh_pos_iff.mpr (by positivity)
   field_simp [shpos.ne', hu.ne', (Real.cosh_pos _).ne', (add_pos shpos hv).ne']
-  linear_combination (sinh t) * h
+  simp only [mul_comm, mul_left_comm, mul_assoc, add_comm, add_left_comm, add_assoc] at h ⊢
+  linarith
 
 private theorem decompose (k n : ℕ) :
     1 / (a (k * (n+1)) - s k / a (k * (n+1))) = b k n + b k (n+1) := by
@@ -149,7 +151,9 @@ private theorem bzero (k : ℕ) (hk : 1 ≤ k) : Tendsto (b k) atTop (nhds 0) :=
     have hM := (div_lt_iff₀ tpos).mp hN
     exact hM.le.trans ((mul_le_mul_of_nonneg_right harg tpos.le).trans
       (Real.self_le_sinh_iff.mpr (by positivity)))
-  simpa [b, div_eq_mul_inv] using
+  change Tendsto (fun n : ℕ => sinh t / (2 * cosh ((k:ℝ)*t)) /
+    sinh ((2*(k:ℝ)*n+k+1)*t)) atTop (nhds 0)
+  simpa only [div_eq_mul_inv, Function.comp_def, mul_zero] using
     (tendsto_const_nhds (x := sinh t / (2 * cosh ((k:ℝ)*t)))).mul (tendsto_inv_atTop_zero.comp hg)
 
 end A057081Proof
