@@ -46,7 +46,7 @@ private theorem periodicOrbit (p : Nat) [Fact p.Prime] (h6 : (6 : ZMod p) ≠ 0)
   let f := coefficients (ZMod p)
   have cancel (i d : Nat) : f (i+d) = f i → f d = f 0 := by
     induction i with
-    | zero => simpa
+    | zero => simp
     | succ i ih =>
       intro h
       apply ih
@@ -70,7 +70,7 @@ private theorem periodicOrbit (p : Nat) [Fact p.Prime] (h6 : (6 : ZMod p) ≠ 0)
 
 private theorem periodicHits (p : Nat) (hp : Nat.Prime p) :
     ∃ L T : Nat, 0 < T ∧ p ∣ a L ∧ ∀ n ≥ L, (p ∣ a (n+T) ↔ p ∣ a n) := by
-  letI : Fact p.Prime := ⟨hp⟩
+  let : Fact p.Prime := ⟨hp⟩
   have bridge (n : Nat) : p ∣ a n ↔ (coefficients (ZMod p) n).2.2 = 0 := by
     rw [← castThird]
     exact (ZMod.natCast_eq_zero_iff _ _).symm
@@ -116,7 +116,8 @@ private theorem gapsOfPeriodicHits (P : Nat → Prop) [DecidablePred P] (L T : N
     induction x, hx using Nat.le_induction with
     | base => dsimp [C]; omega
     | succ x hx ih =>
-      rw [Nat.succ_add, Nat.count_succ, Nat.count_succ P x, ih, propext (per x hx)]
+      rw [Nat.succ_add, Nat.count_succ, Nat.count_succ P x, ih]
+      simp only [per x hx]
       omega
   have shift (i : Nat) (hi : L ≤ i) : Nat.nth P (i+C) = Nat.nth P i + T := by
     have hx : L ≤ Nat.nth P i := le_trans hi ((Nat.nth_strictMono inf).id_le i)
