@@ -68,13 +68,24 @@ theorem classification (n : ℕ) : ¬ perimeter (triangular n) ↔ exceptional (
   by_contra he
   apply hn
   by_cases hsmall : n ≤ 10
-  · interval_cases n <;> first | exact (he (by decide)).elim | exact remainderTwo _ |
-      exact divisibleThree _ | exact remainderOne _
+  · interval_cases n <;> first
+    | exact (he (by unfold exceptional; decide)).elim
+    | exact remainderTwo 0
+    | exact remainderTwo 1
+    | exact remainderTwo 2
+    | exact divisibleThree 0
+    | exact divisibleThree 1
   · have hr : n % 3 = 0 ∨ n % 3 = 1 ∨ n % 3 = 2 := by omega
     rcases hr with hr | hr | hr
-    · convert divisibleThree (n / 3 - 2) using 1 <;> congr 2 <;> omega
-    · convert remainderOne (n / 3 - 4) using 1 <;> congr 2 <;> omega
-    · convert remainderTwo (n / 3) using 1 <;> congr 2 <;> omega
+    · convert divisibleThree (n / 3 - 2) using 1
+      congr 2
+      omega
+    · convert remainderOne (n / 3 - 4) using 1
+      congr 2
+      omega
+    · convert remainderTwo (n / 3) using 1
+      congr 2
+      omega
 
 end TriangularPerimeters
 
