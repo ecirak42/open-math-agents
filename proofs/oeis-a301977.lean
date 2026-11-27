@@ -190,7 +190,7 @@ private theorem matchBoxes (n : Nat) :
       have ht := boxTotal (subseqs m)
       have e : subseqs n = appendDigit (subseqs m) (n%2) := by
         rw [subseqs]
-        simp only [hn, ite_false]
+        simp only [hn, ite_false, m]
       rw [e]
       rcases (by omega : n%2=0 ∨ n%2=1) with hb | hb
       · have en : n = 2*m := by dsimp [m]; omega
