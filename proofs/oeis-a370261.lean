@@ -60,5 +60,5 @@ theorem OMA.solution : type_of% @OMA.S_oeis_a370261.main := by
     field_simp
     ring
   rw [rad, Real.sqrt_sq_eq_abs]
-  exact_mod_cast (Int.natCast_natAbs q).symm
+  rw [← Int.cast_abs, ← Int.natCast_natAbs, Int.cast_natCast]
 
