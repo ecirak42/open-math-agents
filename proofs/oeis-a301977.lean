@@ -137,7 +137,8 @@ private theorem halving (n : Nat) : ∀ x ∈ subseqs n, x/2 ∈ subseqs n := by
     by_cases hn : n=0
     · subst n
       simp [subseqs]
-    · rw [subseqs, if_neg hn]
+    · rw [subseqs]
+      simp only [hn, ite_false]
       intro x hx
       simp only [appendDigit, Finset.mem_union, Finset.mem_image] at hx ⊢
       rcases hx with hx | ⟨y, hy, rfl⟩
@@ -182,13 +183,14 @@ private theorem matchBoxes (n : Nat) :
   | ind n ih =>
     by_cases hn : n=0
     · subst n
-      simp [subseqs, box, oddCount, oddAt]
+      simp [subseqs, box, oddCount, oddAt] <;> decide
     · let m := n/2
       have hlt : m<n := by dsimp [m]; omega
       obtain ⟨h0,h1⟩ := ih m hlt
       have ht := boxTotal (subseqs m)
       have e : subseqs n = appendDigit (subseqs m) (n%2) := by
-        rw [subseqs, if_neg hn]
+        rw [subseqs]
+        simp only [hn, ite_false]
       rw [e]
       rcases (by omega : n%2=0 ∨ n%2=1) with hb | hb
       · have en : n = 2*m := by dsimp [m]; omega
