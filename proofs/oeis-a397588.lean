@@ -1,5 +1,6 @@
 import OMAStatements.S_oeis_a397588
 import Mathlib.RingTheory.PowerSeries.Expand
+import Mathlib.FieldTheory.Finite.Basic
 import Mathlib.Tactic
 
 namespace A397588Proof
@@ -9,7 +10,8 @@ open PowerSeries
 private theorem parity_indices (g : PowerSeries (ZMod 2)) (hg : g = X + g ^ 2) :
     ∀ n : ℕ, 1 ≤ n → (g.coeff n = 1 ↔ ∃ k : ℕ, n = 2 ^ k) := by
   have he : g ^ 2 = g.expand 2 (by decide) := by
-    simpa using (FiniteField.PowerSeries.expand_card g).symm
+    simpa only [PowerSeries.expand, ZMod.frobenius_zmod, MvPowerSeries.map_id, RingHom.id_apply] using
+      (MvPowerSeries.map_frobenius_expand 2 (by decide) (f := g)).symm
   have hc (n : ℕ) : g.coeff n = (if n = 1 then 1 else 0) +
       (if 2 ∣ n then g.coeff (n / 2) else 0) := by
     conv_lhs => rw [hg, he]
