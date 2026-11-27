@@ -94,10 +94,13 @@ private theorem gcd {a b : ℕ} (hab : Nat.Coprime a b) (m n : ℕ) :
 theorem scaled (a b : ℕ) (hab : Nat.Coprime a b) (F : ℕ → ℕ) (h0 : F 0 = 0)
     (hF : ∀ i, F (i + 2) = a * F (i + 1) + b * F i) (m n : ℕ) :
     F (Nat.gcd m n) = Nat.gcd (F n) (F m) := by
-  have scale : ∀ k, F k = F 1 * u a b k
-    | 0 => by simp [u, h0]
-    | 1 => by simp [u]
-    | i + 2 => by rw [hF, scale (i + 1), scale i, step]; ring
+  have scale (k : ℕ) : F k = F 1 * u a b k := by
+    induction k using Nat.twoStepInduction
+    · simp [u, h0]
+    · simp [u]
+    · rename_i i ih0 ih1
+      rw [hF, ih1, ih0, step]
+      ring
   rw [scale (Nat.gcd m n), scale n, scale m, Nat.gcd_mul_left, gcd hab, Nat.gcd_comm (u a b m)]
 
 end LucasDivisibility
